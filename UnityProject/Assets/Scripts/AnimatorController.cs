@@ -1,14 +1,21 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class AnimatorController : MonoBehaviour {
+	public class AnimationFrame
+	{
+		public int StartFrame ;
+		public int EndFrame ;
+	}
+	
 	private bool bPlay = false ;
 	private bool bQuit = false ;
 	private bool bPause = false ;
+	float myFrameTime = 1f / 30f ;
 	
 	private Animator animator ;
-	private int FirstState = Animator.StringToHash("Base Layer.Wave") ;
-	private int LastState = Animator.StringToHash("Base Layer.WalkBack") ;
+	List<AnimationFrame> animations = new List<AnimationFrame>() ;
 	
 	public void SetAnimator( Animator animatorObj ){
 		animator = animatorObj ;
@@ -22,33 +29,48 @@ public class AnimatorController : MonoBehaviour {
 			return ;
 		}
 		//need set speed 1 to blend animation
-		animator.speed = 1f ;
+		animator.speed = 1f ;		
+	}
+	
+	public void StartPlay()
+	{
+		/*Check animation assign to animations
+		foreach( AnimationFrame AF in animations )
+		{
+			Debug.Log( AF.StartFrame + "\n" + AF.EndFrame ) ;
+		}
+		*/
 		StartCoroutine( AnimationController() ) ;
 	}
 	
+	public void AddAnimation( int StartFrame , int EndFrame )
+	{
+		AnimationFrame NewAni = new AnimationFrame() ;
+		NewAni.StartFrame = StartFrame ;
+		NewAni.EndFrame = EndFrame ;
+		animations.Add( NewAni ) ;
+	}
+	
+	float AnimationTimer = 0f ;
 	IEnumerator AnimationController (){
 		bPlay = true ;
-		float AnimationTimer = 0f ;
-		animator.SetFloat( "fTimer" , AnimationTimer ) ;
 		animator.ForceStateNormalizedTime( AnimationTimer ) ;
+		float animationTotalTime = ( animations[0].EndFrame - animations[0].StartFrame ) / 30 ;
+		float frameNormalizedTime = 1 / animationTotalTime ;
 
 		while( !bQuit && bPlay )
 		{
 			if( !bPause )
 			{
-				AnimationTimer += 0.01f ;
-				animator.SetFloat( "fTimer" , AnimationTimer ) ;
+				AnimationTimer += ( myFrameTime * frameNormalizedTime ) ;
 				
-				if( AnimationTimer > 1.0f )
+				if( AnimationTimer >= 1.0f )
 				{
-					if( animator.GetCurrentAnimatorStateInfo(0).nameHash != LastState )
-						AnimationTimer -= 1.0f ;
-					else
-						SetFinish() ;
+					SetFinish() ;
 				}
 				animator.ForceStateNormalizedTime( AnimationTimer ) ;
 			}
-			yield return new WaitForSeconds( 0.01f ) ;
+			yield return new WaitForSeconds( myFrameTime ) ;
 		}
 	}
 	
@@ -64,7 +86,7 @@ public class AnimatorController : MonoBehaviour {
 		{
 			yield return null ;
 		}
-		StartCoroutine( AnimationController() ) ;
+		StartPlay() ;
 	}
 	*/
 	public void SetPause( bool NewPause ){
@@ -75,5 +97,11 @@ public class AnimatorController : MonoBehaviour {
 	}
 	
 	public bool GetPauseState(){return bPause;}
+	public float GetNormalizedTime(){return AnimationTimer;}
+	public void SetNormalizedTime( float NewNormalizedTime )
+	{
+		AnimationTimer = NewNormalizedTime ;
+		animator.ForceStateNormalizedTime( AnimationTimer ) ;
+	}
 
 }
