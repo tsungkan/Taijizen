@@ -15,19 +15,25 @@ public class MainController : MonoBehaviour {
 	public GUITexture PlayPauseBoutton ;
 	public GUITexture SpeedBarBackground ;
 	public GUITexture SpeedBarPoint ;
+	public GUITexture ZoomBarBackground ;
+	public GUITexture ZoomBarPoint ;
 	private float timerBarWidth = Screen.width * 0.7f ;
 	private Vector2 TimerBarPos = new Vector2( Screen.width * 0.15f , 10f ) ;
 	private float speedBarHeight = 80f ;
+	private float zoomBarHeight = 80f ;
 	
 
 	private bool MouseClick = false ;
 	private bool MouseRelease = false ;
-	private bool bDragTimerBar = false ;
 	private Vector3 MouseDownPosition = Vector3.zero ;
+	
+	private bool bDragTimerBar = false ;
 	private float nowNormalizedTime = 0.0f ;
 	private bool bDragSpeedBar = false ;
-	private float AnimationSpeed = 1.0f ;
-	private float nowNormalizedSpeed = 0.0f ;
+	private float OldAnimationSpeed = 1.0f ;
+	private bool bDragZoomBar = false ;
+	private float OldZoomValue = 2.0f ;
+	
 	
 	CameraController CamCtr ;
 	private bool bRotateCam = false ;
@@ -53,8 +59,12 @@ public class MainController : MonoBehaviour {
 		TimerBarBackground.pixelInset = new Rect( TimerBarPos.x , TimerBarPos.y , timerBarWidth , 20f ) ;
 		TimerBarPoint.pixelInset = new Rect( TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) , TimerBarPos.y ,10f , 20f ) ;
 		PlayPauseBoutton.pixelInset = new Rect( TimerBarPos.x - 40f , TimerBarPos.y ,20f , 20f ) ;
+		
 		SpeedBarBackground.pixelInset = new Rect( Screen.width - 50f , 10f , 20f , speedBarHeight ) ;
-		SpeedBarPoint.pixelInset = SpeedBarPoint.pixelInset = new Rect( Screen.width - 50f , speedBarHeight * AniCtr.GetAnimationSpeed() / 1.5f - 20f , 20f , 10f ) ;//15-75
+		SpeedBarPoint.pixelInset = new Rect( Screen.width - 50f , speedBarHeight * ( AniCtr.GetAnimationSpeed() - 0.5f ) / ( 2f - 0.5f ) + SpeedBarBackground.pixelInset.y , 20f , 10f ) ;//15-75
+		
+		ZoomBarBackground.pixelInset = new Rect( Screen.width - 50f , 150f , 20f , zoomBarHeight ) ;
+		ZoomBarPoint.pixelInset =  new Rect( Screen.width - 50f , zoomBarHeight * ( CamCtr.GetCameraZoom() - 2f ) / ( 5f - 2f ) + ZoomBarBackground.pixelInset.y , 20f , 10f ) ;//15-75
 	}
 	
 	void CheckUserCtr()
@@ -79,12 +89,17 @@ public class MainController : MonoBehaviour {
 			else if( SpeedBarPoint.HitTest( Input.mousePosition ) )
 			{
 				bDragSpeedBar = true ;
-				AnimationSpeed = AniCtr.GetAnimationSpeed() ;
+				OldAnimationSpeed = AniCtr.GetAnimationSpeed() ;
+			}
+			else if( ZoomBarPoint.HitTest( Input.mousePosition ) )
+			{
+				bDragZoomBar = true ;
+				OldZoomValue = CamCtr.GetCameraZoom() ;
 			}
 			else 
 			{
 				bRotateCam = true ;
-				CamCtr.readyRotate() ;
+				CamCtr.ReadyRotate() ;
 			}
 		}
 		
@@ -96,9 +111,7 @@ public class MainController : MonoBehaviour {
 				if( !bPause )
 					AniCtr.SetPause( false ) ;
 			}
-			bDragTimerBar = false ;
-			bDragSpeedBar = false ;
-			bRotateCam = false ;
+			bDragTimerBar =	bDragSpeedBar = bRotateCam = bDragZoomBar = false ;
 		}
 	}
 	
@@ -110,10 +123,9 @@ public class MainController : MonoBehaviour {
 			float newNormalizedTime = nowNormalizedTime + ( xGap / timerBarWidth ) ;
 			newNormalizedTime = Mathf.Clamp( newNormalizedTime , StartNormalizedTime , EndNormalizedTime ) ;
 			AniCtr.SetNormalizedTime( newNormalizedTime ) ;
-		}			
+		}
 		float PlaySliderValue = TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) + timerBarWidth * AniCtr.GetNormalizedTime() ;
 		TimerBarPoint.pixelInset = new Rect( PlaySliderValue , TimerBarPos.y , 10f , 20f ) ;
-		
 	}
 
 	void SpeedBar()
@@ -122,11 +134,24 @@ public class MainController : MonoBehaviour {
 			return ;
 		
 		float yGap = Input.mousePosition.y - MouseDownPosition.y ;
-		float newSpeed = AnimationSpeed + ( yGap / speedBarHeight * ( 2f - 0.5f ) ) ;
+		float newSpeed = OldAnimationSpeed + ( yGap / speedBarHeight * ( 2f - 0.5f ) ) ;
 		newSpeed = Mathf.Clamp( newSpeed , 0.5f , 2f ) ;
 		AniCtr.SetAnimationSpeed( newSpeed ) ;
-		float SpeedSliderValue = speedBarHeight * AniCtr.GetAnimationSpeed() / 1.5f - 20f ;
-		SpeedBarPoint.pixelInset = new Rect( Screen.width - 50f , SpeedSliderValue , 20f , 10f ) ;
+		float SpeedSliderValue = speedBarHeight * ( AniCtr.GetAnimationSpeed() - 0.5f ) / ( 2f - 0.5f ) + SpeedBarBackground.pixelInset.y  - SpeedBarPoint.pixelInset.height ;
+		SpeedBarPoint.pixelInset = new Rect( Screen.width - 50f , speedBarHeight * ( AniCtr.GetAnimationSpeed() - 0.5f ) / 1.5f + 10f , 20f , 10f ) ;
+	}
+	
+	void ZoomBar()
+	{
+		if( !bDragZoomBar )
+			return ;
+		
+		float yGap = Input.mousePosition.y - MouseDownPosition.y ;
+		float newZoom = OldZoomValue + ( yGap / speedBarHeight * ( 5f - 2f ) ) ;
+		newZoom = Mathf.Clamp( newZoom , 2f , 5f ) ;
+		CamCtr.SetCameraZoom( newZoom ) ;
+		float ZoomSliderValue = zoomBarHeight * ( CamCtr.GetCameraZoom() - 2f ) / ( 5f - 2f ) + ZoomBarBackground.pixelInset.y - ZoomBarPoint.pixelInset.height ;
+		ZoomBarPoint.pixelInset =  new Rect( Screen.width - 50f , ZoomSliderValue , 20f , 10f ) ;//15-75
 	}
 	
 	void CameraRotate()
@@ -135,8 +160,7 @@ public class MainController : MonoBehaviour {
 			return ;
 		
 		float xGap = Input.mousePosition.x - MouseDownPosition.x ;
-		float yGap = Input.mousePosition.y - MouseDownPosition.y ;//2-5
-		CamCtr.myRotate( xGap , yGap ) ;
+		CamCtr.MyRotate( xGap ) ;
 	}
 	
 	void SetAnimationDescription()
@@ -167,6 +191,7 @@ public class MainController : MonoBehaviour {
 		TimerBar() ;
 		SpeedBar() ;
 		CameraRotate() ;
+		ZoomBar() ;
 	}
 	
  	void Start()
@@ -179,7 +204,7 @@ public class MainController : MonoBehaviour {
 		
 		GUI.Label( new Rect( 5f , 5f , Screen.width , 20f ) , "Animation Bar : Bule" ) ;
 		GUI.Label( new Rect( 5f , 25f , Screen.width , 20f ) , "Speed Bar : Red" ) ;
-		//GUI.Label( new Rect( 5f , 45f , Screen.width , 20f ) , "MouseRelease : " + MouseRelease ) ;
+		GUI.Label( new Rect( 5f , 45f , Screen.width , 20f ) , "Zoom Bar : Green" ) ;
 		//GUI.Label( new Rect( 5f , 65f , Screen.width , 20f ) , "bRotateCam : " + bRotateCam ) ;
     }
 }
