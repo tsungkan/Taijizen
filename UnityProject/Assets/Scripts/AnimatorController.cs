@@ -34,15 +34,13 @@ public class AnimatorController : MonoBehaviour {
 		animator.speed = AnimationSpeed ;
 	}
 	
-	public void StartPlay()
+	public bool StartPlay()
 	{
-		/*Check animation assign to animations
-		foreach( AnimationFrame AF in animations )
-		{
-			Debug.Log( AF.StartFrame + "\n" + AF.EndFrame ) ;
-		}
-		*/
+		if( animations.Count <= 0 )
+			return false ;
+		
 		StartCoroutine( AnimationController() ) ;
+		return true ;
 	}
 	
 	public void AddAnimation( string AnimationName , int StartFrame , int EndFrame )
@@ -67,32 +65,28 @@ public class AnimatorController : MonoBehaviour {
 		{
 			if( !bPause )
 			{
-				AnimationTimer += ( myFrameTime * frameNormalizedTime * AnimationSpeed ) ;
-				
-				if( AnimationTimer >= 1.0f )
-				{
-					SetFinish() ;
-				}
+				AnimationTimer += ( myFrameTime * frameNormalizedTime * AnimationSpeed ) ;				
 				animator.ForceStateNormalizedTime( AnimationTimer ) ;
 			}
 			yield return new WaitForSeconds( myFrameTime ) ;
 		}
 	}
 	
-	private void SetFinish()
+	public void SetFinish()
 	{
 		bPlay = false ;
 		SetPause( true ) ;
 	}
 
-	private void SetStart()
+	public void SetStart( float StartNormalizedTime )
 	{
 		bPlay = true ;
-		AnimationTimer = 0.0f ;
+		AnimationTimer = StartNormalizedTime ;
 		animator.ForceStateNormalizedTime( AnimationTimer ) ;
 		SetPause( false ) ;
 	}
 
+	public bool GetPlayState(){return bPlay;}
 	public bool GetPauseState(){return bPause;}
 	public void SetPause( bool NewPause )
 	{
@@ -100,8 +94,6 @@ public class AnimatorController : MonoBehaviour {
 		//need set speed 1 to blend animation
 		if( !bPause )
 		{
-			if( !bPlay )
-				SetStart() ;
 			animator.speed = AnimationSpeed ;
 		}
 		else
@@ -123,5 +115,15 @@ public class AnimatorController : MonoBehaviour {
 		AnimationSpeed = NewSpeed ;
 		if( !bPause )
 			animator.speed = AnimationSpeed ;
+	}
+	
+	public float CalculateNormalizedTime( float FrameIndex )
+	{
+		return ( ( FrameIndex - animations[0].StartFrame ) / ( animations[0].EndFrame - animations[0].StartFrame ) ) ;
+	}
+	
+	public AnimationFrame GetAnimationFrame( int index )
+	{
+		return animations[index] ;
 	}
 }

@@ -3,15 +3,9 @@ using System.Collections;
 
 public class CameraController : MonoBehaviour {
 	
-	private Vector3 camPos = Vector3.zero ;
 	private float camDis = 2.0f ;
 	public Transform LookTarget = null ;
 	
-	public void ReadyRotate()
-	{
-		camPos = this.transform.position ;
-	}
-
 	public void MyRotate( float xGap )
 	{
 		xGap = Mathf.Clamp( xGap , -0.5f , 0.5f ) ;
