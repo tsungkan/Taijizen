@@ -3,29 +3,31 @@ using System.Collections;
 
 public class CameraController : MonoBehaviour {
 	
-	private float camDis = 2.0f ;
-	public Transform LookTarget = null ;
+	private float camFOV = 60f ;
+	public Transform lookTarget = null ;
+	private float rotateSpeed = 1f ;
+	private float yPos = 1f ;
 	
-	public void MyRotate( float xGap )
+	public void MyRotate( float xGap , float yGap )
 	{
-		xGap = Mathf.Clamp( xGap , -0.5f , 0.5f ) ;
-		LookTarget.Rotate( Vector3.up * xGap ) ;
+		yPos = Mathf.Clamp( ( yGap / ( Screen.height * 5f ) ) + yPos , -1f , 3f ) ;
+		xGap = Mathf.Clamp( xGap , -rotateSpeed , rotateSpeed ) ;
+		lookTarget.Rotate( Vector3.up * xGap ) ;
 		
-		Vector3 Direction = LookTarget.forward * camDis ;
-		Direction.y = 1.0f ;
+		Vector3 direction = lookTarget.forward * 2f ;
+		direction.y = yPos ;
 		
-		this.transform.position = Direction ;
-		this.transform.LookAt( LookTarget ) ;
+		this.transform.position = direction ;
+		this.transform.LookAt( lookTarget ) ;
 	}
 	
 	public void SetCameraZoom( float newZoom )
 	{
-		camDis = newZoom ;
-		Vector3 Direction = LookTarget.forward * camDis ;
-		Direction.y = 1.0f ;
+		camFOV = newZoom ;
+		this.camera.fieldOfView = camFOV ;
 		
-		this.transform.position = Direction ;
 	}
 	
-	public float GetCameraZoom(){ return camDis ;}
+	public float GetCameraZoom(){return camFOV ;}
+	
 }

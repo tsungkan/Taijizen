@@ -7,43 +7,43 @@ public class MainController : MonoBehaviour {
 	private bool bPause = false ;
 	private bool bQuit = false ;
 	
-	AnimatorController AniCtr ;
+	AnimatorController aniCtr ;
 	
 
-	private bool MouseClick = false ;
-	private bool MouseRelease = false ;
-	private Vector3 MouseDownPosition = Vector3.zero ;
+	private bool mouseClick = false ;
+	private bool mouseRelease = false ;
+	private Vector3 mouseDownPosition = Vector3.zero ;
 	
-	public GUITexture TimerBarBackground ;
-	public GUITexture TimerBarPoint ;
-	public GUITexture PlayPauseBoutton ;
+	public GUITexture timerBarBackground ;
+	public GUITexture timerBarPoint ;
+	public GUITexture playPauseBoutton ;
 	private bool bDragTimerBar = false ;
-	private float nowNormalizedTime = 0.0f ;
+	private float oldNormalizedTime = 0.0f ;
 	private float timerBarWidth = Screen.width * 0.7f ;
-	private Vector2 TimerBarPos = new Vector2( Screen.width * 0.15f , 10f ) ;
+	private Vector2 timerBarPos = new Vector2( Screen.width * 0.15f , 10f ) ;
 	
-	public GUITexture SpeedBarBackground ;
-	public GUITexture SpeedBarPoint ;
+	public GUITexture speedBarBackground ;
+	public GUITexture speedBarPoint ;
 	private bool bDragSpeedBar = false ;
-	private float OldAnimationSpeed = 1.0f ;
+	private float oldAnimationSpeed = 1.0f ;
 	private float speedBarHeight = 80f ;
 
-	public GUITexture ZoomBarBackground ;
-	public GUITexture ZoomBarPoint ;
+	public GUITexture zoomBarBackground ;
+	public GUITexture zoomBarPoint ;
 	private bool bDragZoomBar = false ;
-	private float OldZoomValue = 2.0f ;
-	private float zoomBarHeight = 80f ;	
+	private float oldZoomValue = 60f ;
+	private float zoomBarHeight = 80f ;
 	
-	public GUITexture StartEndFrameBarBackground ;
-	public GUITexture StartFrameBarPoint ;	
-	public GUITexture EndFrameBarPoint ;
+	public GUITexture startEndFrameBarBackground ;
+	public GUITexture startFrameBarPoint ;	
+	public GUITexture endFrameBarPoint ;
 	private bool bDragStartFrameBar = false ;
 	private bool bDragEndFrameBar = false ;
-	private float OldStartEndFrameNormalized = 0.0f ;
-	private float StartNormalizedTime = 0.0f ;
-	private float EndNormalizedTime = 1.0f ;
+	private float oldStartEndFrameNormalized = 0.0f ;
+	private float startNormalizedTime = 0.0f ;
+	private float endNormalizedTime = 1.0f ;
 	
-	CameraController CamCtr ;
+	CameraController camCtr ;
 	private bool bRotateCam = false ;
 	/*
 	enum MouseState
@@ -53,85 +53,92 @@ public class MainController : MonoBehaviour {
 	*/
 	void Awake ()
 	{
-		CamCtr = Camera.main.GetComponent<CameraController>() ;
+		camCtr = Camera.main.GetComponent<CameraController>() ;
 		
-		AniCtr = this.gameObject.AddComponent<AnimatorController>() ;
-		AniCtr.SetAnimator( this.GetComponent<Animator>() ) ;
+		aniCtr = this.gameObject.AddComponent<AnimatorController>() ;
+		aniCtr.SetAnimator( this.GetComponent<Animator>() ) ;
 		SetAnimationDescription() ;
 		SetupMyUI() ;
-		bStart = AniCtr.StartPlay() ;
-		bPlay = AniCtr.GetPlayState() ;
+		bStart = aniCtr.StartPlay() ;
+		bPlay = aniCtr.GetPlayState() ;
 	}
+	
+	float barPointLongSide = 20f ;
+	float barPointShortSide = 10f ;
 	
 	void SetupMyUI()
 	{
-		TimerBarBackground.pixelInset = new Rect( TimerBarPos.x , TimerBarPos.y , timerBarWidth , 20f ) ;
-		TimerBarPoint.pixelInset = new Rect( TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) , TimerBarPos.y ,10f , 20f ) ;
-		PlayPauseBoutton.pixelInset = new Rect( TimerBarPos.x - 40f , TimerBarPos.y ,20f , 20f ) ;
+		timerBarBackground.pixelInset = new Rect( timerBarPos.x , timerBarPos.y , timerBarWidth , barPointLongSide ) ;
+		float playSliderValue = CalculateBarPointPos( timerBarPos.x , barPointShortSide , aniCtr.GetNormalizedTime() , startNormalizedTime , endNormalizedTime , timerBarWidth ) ;
+		timerBarPoint.pixelInset = new Rect( playSliderValue , timerBarPos.y , barPointShortSide , barPointLongSide ) ;
 		
-		SpeedBarBackground.pixelInset = new Rect( Screen.width - 50f , 10f , 20f , speedBarHeight ) ;
-		SpeedBarPoint.pixelInset = new Rect( Screen.width - 50f , speedBarHeight * ( AniCtr.GetAnimationSpeed() - 0.5f ) / ( 2f - 0.5f ) + SpeedBarBackground.pixelInset.y , 20f , 10f ) ;//15-75
+		playPauseBoutton.pixelInset = new Rect( timerBarPos.x - 40f , timerBarPos.y , barPointLongSide , barPointLongSide ) ;
 		
-		ZoomBarBackground.pixelInset = new Rect( Screen.width - 50f , 150f , 20f , zoomBarHeight ) ;
-		ZoomBarPoint.pixelInset =  new Rect( Screen.width - 50f , zoomBarHeight * ( CamCtr.GetCameraZoom() - 2f ) / ( 5f - 2f ) + ZoomBarBackground.pixelInset.y , 20f , 10f ) ;//15-75
+		speedBarBackground.pixelInset = new Rect( Screen.width - 50f , 10f , 20f , speedBarHeight ) ;
+		float speedSliderValue = CalculateBarPointPos( speedBarBackground.pixelInset.y , barPointShortSide , aniCtr.GetAnimationSpeed() , 0.5f , 2f , speedBarHeight ) ;
+		speedBarPoint.pixelInset = new Rect( Screen.width - 50f , speedSliderValue , barPointLongSide , barPointShortSide ) ;//15-75
+		
+		zoomBarBackground.pixelInset = new Rect( Screen.width - 50f , 150f , 20f , zoomBarHeight ) ;
+		float zoomSliderValue = CalculateBarPointPos( zoomBarBackground.pixelInset.y , barPointShortSide , camCtr.GetCameraZoom() , 60f , 100f , zoomBarHeight ) ;
+		zoomBarPoint.pixelInset =  new Rect( Screen.width - 50f , zoomSliderValue , barPointLongSide , 10f ) ;//15-75
 
-		StartEndFrameBarBackground.pixelInset = new Rect( TimerBarPos.x , Screen.height - TimerBarPos.y , timerBarWidth , 20f ) ;		
-		float StartFrameSliderValue = TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) + timerBarWidth * StartNormalizedTime ;
-		StartFrameBarPoint.pixelInset = new Rect( StartFrameSliderValue , Screen.height - TimerBarPos.y ,10f , 20f ) ;		
-		float EndFrameSliderValue = TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) + timerBarWidth * EndNormalizedTime ;
-		EndFrameBarPoint.pixelInset = new Rect( EndFrameSliderValue , Screen.height - TimerBarPos.y ,10f , 20f ) ;
+		startEndFrameBarBackground.pixelInset = new Rect( timerBarPos.x , Screen.height - timerBarPos.y , timerBarWidth , 20f ) ;		
+		float startFrameSliderValue = CalculateBarPointPos( timerBarPos.x , barPointLongSide , startNormalizedTime , 0f , 1f , timerBarWidth ) ;
+		startFrameBarPoint.pixelInset = new Rect( startFrameSliderValue , Screen.height - timerBarPos.y , barPointShortSide , barPointLongSide ) ;
+		float endFrameSliderValue = CalculateBarPointPos( timerBarPos.x , barPointLongSide , endNormalizedTime , 0f , 1f , timerBarWidth ) ;
+		endFrameBarPoint.pixelInset = new Rect( endFrameSliderValue , Screen.height - timerBarPos.y , barPointShortSide , barPointLongSide ) ;
 	}
 	
 	void CheckUserCtr()
 	{
-		if( MouseClick )
+		if( mouseClick )
 		{
-			MouseClick = false ;
-			MouseDownPosition = Input.mousePosition ;
-			if( PlayPauseBoutton.HitTest( Input.mousePosition ) )
+			mouseClick = false ;
+			mouseDownPosition = Input.mousePosition ;
+			if( playPauseBoutton.HitTest( Input.mousePosition ) )
 			{
 				if( bPlay )
-					AniCtr.SetPause( !AniCtr.GetPauseState() ) ;
+					aniCtr.SetPause( !aniCtr.GetPauseState() ) ;
 				else
-					AniCtr.SetStart( StartNormalizedTime ) ;
-				bPlay = AniCtr.GetPlayState() ;
+					aniCtr.SetStart( startNormalizedTime ) ;
+				bPlay = aniCtr.GetPlayState() ;
 			}
-			else if( TimerBarPoint.HitTest( Input.mousePosition ) )
+			else if( timerBarPoint.HitTest( Input.mousePosition ) )
 			{
 				bDragTimerBar = true ;
-				bPause = AniCtr.GetPauseState() ;
+				bPause = aniCtr.GetPauseState() ;
 				if( !bPause )
-					AniCtr.SetPause( true ) ;
+					aniCtr.SetPause( true ) ;
 				
-				nowNormalizedTime = AniCtr.GetNormalizedTime() ;
+				oldNormalizedTime = aniCtr.GetNormalizedTime() ;
 			}
-			else if( SpeedBarPoint.HitTest( Input.mousePosition ) )
+			else if( speedBarPoint.HitTest( Input.mousePosition ) )
 			{
 				bDragSpeedBar = true ;
-				OldAnimationSpeed = AniCtr.GetAnimationSpeed() ;
+				oldAnimationSpeed = aniCtr.GetAnimationSpeed() ;
 			}
-			else if( ZoomBarPoint.HitTest( Input.mousePosition ) )
+			else if( zoomBarPoint.HitTest( Input.mousePosition ) )
 			{
 				bDragZoomBar = true ;
-				OldZoomValue = CamCtr.GetCameraZoom() ;
+				oldZoomValue = camCtr.GetCameraZoom() ;
 			}
-			else if( StartFrameBarPoint.HitTest( Input.mousePosition ) )
+			else if( startFrameBarPoint.HitTest( Input.mousePosition ) )
 			{
 				bDragStartFrameBar = true ;
-				NewStartEndFrameNormalized = OldStartEndFrameNormalized = StartNormalizedTime ;
-				nowNormalizedTime = AniCtr.GetNormalizedTime() ;
-				bPause = AniCtr.GetPauseState() ;
+				NewStartEndFrameNormalized = oldStartEndFrameNormalized = startNormalizedTime ;
+				oldNormalizedTime = aniCtr.GetNormalizedTime() ;
+				bPause = aniCtr.GetPauseState() ;
 				if( !bPause )
-					AniCtr.SetPause( true ) ;
+					aniCtr.SetPause( true ) ;
 			}
-			else if( EndFrameBarPoint.HitTest( Input.mousePosition ) )
+			else if( endFrameBarPoint.HitTest( Input.mousePosition ) )
 			{
 				bDragEndFrameBar = true ;
-				NewStartEndFrameNormalized = OldStartEndFrameNormalized = EndNormalizedTime ;
-				nowNormalizedTime = AniCtr.GetNormalizedTime() ;
-				bPause = AniCtr.GetPauseState() ;
+				NewStartEndFrameNormalized = oldStartEndFrameNormalized = endNormalizedTime ;
+				oldNormalizedTime = aniCtr.GetNormalizedTime() ;
+				bPause = aniCtr.GetPauseState() ;
 				if( !bPause )
-					AniCtr.SetPause( true ) ;
+					aniCtr.SetPause( true ) ;
 			}
 			else
 			{
@@ -139,28 +146,28 @@ public class MainController : MonoBehaviour {
 			}
 		}
 		
-		if( MouseRelease )
+		if( mouseRelease )
 		{
-			MouseRelease = false ;
+			mouseRelease = false ;
 			if( bDragTimerBar )
 			{
 				if( !bPause )
-					AniCtr.SetPause( false ) ;
+					aniCtr.SetPause( false ) ;
 				bDragTimerBar = false ;
 			}
 			else if( bDragStartFrameBar )
 			{
 				bDragStartFrameBar = false ;
-				StartNormalizedTime = NewStartEndFrameNormalized ;
+				startNormalizedTime = NewStartEndFrameNormalized ;
 				if( !bPause )
-					AniCtr.SetPause( false ) ;
+					aniCtr.SetPause( false ) ;
 			}
 			else if( bDragEndFrameBar )
 			{
 				bDragEndFrameBar = false ;
-				EndNormalizedTime = NewStartEndFrameNormalized ;
+				endNormalizedTime = NewStartEndFrameNormalized ;
 				if( !bPause )
-					AniCtr.SetPause( false ) ;
+					aniCtr.SetPause( false ) ;
 			}
 			bDragSpeedBar = bRotateCam = bDragZoomBar = false ;
 		}
@@ -170,55 +177,50 @@ public class MainController : MonoBehaviour {
 	{
 		if( bDragTimerBar )
 		{
-			float xGap = Input.mousePosition.x - MouseDownPosition.x ;
-			float newNormalizedTime = nowNormalizedTime + ( xGap / timerBarWidth ) ;
-			newNormalizedTime = Mathf.Clamp( newNormalizedTime , StartNormalizedTime , EndNormalizedTime ) ;
-			AniCtr.SetNormalizedTime( newNormalizedTime ) ;
+			float xGap = Input.mousePosition.x - mouseDownPosition.x ;
+			float newNormalizedTime = CalculateBarPointValue( oldNormalizedTime , xGap , timerBarWidth , startNormalizedTime , endNormalizedTime ) ;
+			aniCtr.SetNormalizedTime( newNormalizedTime ) ;
 		}
 		else if( bDragStartFrameBar )
 		{
-			if( nowNormalizedTime < NewStartEndFrameNormalized )
+			if( oldNormalizedTime < NewStartEndFrameNormalized )
 			{
-				nowNormalizedTime = NewStartEndFrameNormalized ;
-				AniCtr.SetNormalizedTime( nowNormalizedTime ) ;
+				oldNormalizedTime = NewStartEndFrameNormalized ;
+				aniCtr.SetNormalizedTime( oldNormalizedTime ) ;
 			}
-			//nowNormalizedTime = Mathf.Clamp( nowNormalizedTime , NewStartEndFrameNormalized , EndNormalizedTime ) ;
-			//AniCtr.SetNormalizedTime( nowNormalizedTime ) ;
 		}
 		else if( bDragEndFrameBar )
 		{
-			if( nowNormalizedTime > NewStartEndFrameNormalized )
+			if( oldNormalizedTime > NewStartEndFrameNormalized )
 			{
-				nowNormalizedTime = NewStartEndFrameNormalized ;
-				AniCtr.SetNormalizedTime( nowNormalizedTime ) ;
+				oldNormalizedTime = NewStartEndFrameNormalized ;
+				aniCtr.SetNormalizedTime( oldNormalizedTime ) ;
 			}
-			//nowNormalizedTime = Mathf.Clamp( nowNormalizedTime , StartNormalizedTime , NewStartEndFrameNormalized ) ;
-			//AniCtr.SetNormalizedTime( nowNormalizedTime ) ;
 		}
-		float PlaySliderValue = TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) + timerBarWidth * AniCtr.GetNormalizedTime() ;
-		TimerBarPoint.pixelInset = new Rect( PlaySliderValue , TimerBarPos.y , 10f , 20f ) ;
+		float playSliderValue = CalculateBarPointPos( timerBarPos.x , barPointShortSide , aniCtr.GetNormalizedTime() , startNormalizedTime , endNormalizedTime , timerBarWidth ) ;
+		timerBarPoint.pixelInset = new Rect( playSliderValue , timerBarPos.y , barPointShortSide , barPointLongSide ) ;
 		
 		if( !bPlay )
 			return ;
 		
-		if( AniCtr.GetNormalizedTime() > EndNormalizedTime )
+		if( aniCtr.GetNormalizedTime() > endNormalizedTime )
 		{
-			AniCtr.SetFinish() ;
-			bPlay = AniCtr.GetPlayState() ;
+			aniCtr.SetFinish() ;
+			bPlay = aniCtr.GetPlayState() ;
 		}
 	}
-
+	
 	void SpeedBar()
 	{
 		if( !bDragSpeedBar )
 			return ;
 		
-		float yGap = Input.mousePosition.y - MouseDownPosition.y ;
-		float newSpeed = OldAnimationSpeed + ( yGap / speedBarHeight * ( 2f - 0.5f ) ) ;
-		newSpeed = Mathf.Clamp( newSpeed , 0.5f , 2f ) ;
-		AniCtr.SetAnimationSpeed( newSpeed ) ;
-		float SpeedSliderValue = speedBarHeight * ( AniCtr.GetAnimationSpeed() - 0.5f ) / ( 2f - 0.5f ) + SpeedBarBackground.pixelInset.y - SpeedBarPoint.pixelInset.height ;
-		SpeedBarPoint.pixelInset = new Rect( Screen.width - 50f , SpeedSliderValue , 20f , 10f ) ;
+		float yGap = Input.mousePosition.y - mouseDownPosition.y ;
+		float newSpeed = CalculateBarPointValue( oldAnimationSpeed , yGap , speedBarHeight , 0.5f , 2f ) ;
+		aniCtr.SetAnimationSpeed( newSpeed ) ;
+		
+		float speedSliderValue = CalculateBarPointPos( speedBarBackground.pixelInset.y , barPointShortSide , aniCtr.GetAnimationSpeed() , 0.5f , 2f , speedBarHeight ) ;
+		speedBarPoint.pixelInset = new Rect( Screen.width - 50f , speedSliderValue , barPointLongSide , barPointShortSide ) ;//15-75
 	}
 	
 	void ZoomBar()
@@ -226,12 +228,12 @@ public class MainController : MonoBehaviour {
 		if( !bDragZoomBar )
 			return ;
 		
-		float yGap = Input.mousePosition.y - MouseDownPosition.y ;
-		float newZoom = OldZoomValue + ( yGap / speedBarHeight * ( 5f - 2f ) ) ;
-		newZoom = Mathf.Clamp( newZoom , 2f , 5f ) ;
-		CamCtr.SetCameraZoom( newZoom ) ;
-		float ZoomSliderValue = zoomBarHeight * ( CamCtr.GetCameraZoom() - 2f ) / ( 5f - 2f ) + ZoomBarBackground.pixelInset.y - ZoomBarPoint.pixelInset.height ;
-		ZoomBarPoint.pixelInset =  new Rect( Screen.width - 50f , ZoomSliderValue , 20f , 10f ) ;//15-75
+		float yGap = Input.mousePosition.y - mouseDownPosition.y ;
+		float newZoom = CalculateBarPointValue( oldZoomValue , yGap , speedBarHeight , 60f , 100f ) ;
+		camCtr.SetCameraZoom( newZoom ) ;
+		
+		float zoomSliderValue = CalculateBarPointPos( zoomBarBackground.pixelInset.y , barPointShortSide , camCtr.GetCameraZoom() , 60f , 100f , zoomBarHeight ) ;
+		zoomBarPoint.pixelInset =  new Rect( Screen.width - 50f , zoomSliderValue , barPointLongSide , 10f ) ;//15-75
 	}
 	
 	void CameraRotate()
@@ -239,8 +241,9 @@ public class MainController : MonoBehaviour {
 		if( !bRotateCam )
 			return ;
 		
-		float xGap = Input.mousePosition.x - MouseDownPosition.x ;
-		CamCtr.MyRotate( xGap ) ;
+		float xGap = Input.mousePosition.x - mouseDownPosition.x ;
+		float yGap = Input.mousePosition.y - mouseDownPosition.y ;
+		camCtr.MyRotate( xGap , yGap ) ;
 	}
 	
 	float NewStartEndFrameNormalized = 0.0f ;
@@ -248,58 +251,72 @@ public class MainController : MonoBehaviour {
 	{
 		if( bDragStartFrameBar )
 		{
-			float xGap = Input.mousePosition.x - MouseDownPosition.x ;
-			NewStartEndFrameNormalized = OldStartEndFrameNormalized + ( xGap / timerBarWidth ) ;
-			NewStartEndFrameNormalized = Mathf.Clamp( NewStartEndFrameNormalized , 0f , EndNormalizedTime - 0.05f ) ;
-			float StartFrameSliderValue = TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) + timerBarWidth * NewStartEndFrameNormalized ;
-			StartFrameBarPoint.pixelInset = new Rect( StartFrameSliderValue , Screen.height - TimerBarPos.y ,10f , 20f ) ;		
+			float xGap = Input.mousePosition.x - mouseDownPosition.x ;
+			NewStartEndFrameNormalized = CalculateBarPointValue( oldStartEndFrameNormalized , xGap , timerBarWidth , 0f , endNormalizedTime - 0.05f ) ;
+			
+			float startFrameSliderValue = CalculateBarPointPos( timerBarPos.x , barPointLongSide , NewStartEndFrameNormalized , 0f , 1f , timerBarWidth ) ;
+			startFrameBarPoint.pixelInset = new Rect( startFrameSliderValue , Screen.height - timerBarPos.y , barPointShortSide , barPointLongSide ) ;
 		}
 		else if( bDragEndFrameBar )
 		{
-			float xGap = Input.mousePosition.x - MouseDownPosition.x ;
-			NewStartEndFrameNormalized = OldStartEndFrameNormalized + ( xGap / timerBarWidth ) ;
-			NewStartEndFrameNormalized = Mathf.Clamp( NewStartEndFrameNormalized , StartNormalizedTime + 0.05f , 1f ) ;
-			float EndFrameSliderValue = TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) + timerBarWidth * NewStartEndFrameNormalized ;
-			EndFrameBarPoint.pixelInset = new Rect( EndFrameSliderValue , Screen.height - TimerBarPos.y ,10f , 20f ) ;
+			float xGap = Input.mousePosition.x - mouseDownPosition.x ;
+			NewStartEndFrameNormalized = CalculateBarPointValue( oldStartEndFrameNormalized , xGap , timerBarWidth , startNormalizedTime + 0.05f , 1f ) ;
+			
+			float endFrameSliderValue = CalculateBarPointPos( timerBarPos.x , barPointLongSide , NewStartEndFrameNormalized , 0f , 1f , timerBarWidth ) ;
+			endFrameBarPoint.pixelInset = new Rect( endFrameSliderValue , Screen.height - timerBarPos.y , barPointShortSide , barPointLongSide ) ;
 		}
 	}
 	
  	void SetStrokes( int StrokesIndex )
 	{
-		bPause = AniCtr.GetPauseState() ;
+		bPause = aniCtr.GetPauseState() ;
 		if( !bPause )
-			AniCtr.SetPause( true ) ;
-		AnimatorController.AnimationFrame StrokesFrame = AniCtr.GetAnimationFrame( StrokesIndex ) ;
-		StartNormalizedTime = AniCtr.CalculateNormalizedTime( StrokesFrame.StartFrame ) ;
-		EndNormalizedTime = AniCtr.CalculateNormalizedTime( StrokesFrame.EndFrame ) ;
+			aniCtr.SetPause( true ) ;
+		AnimatorController.AnimationFrame StrokesFrame = aniCtr.GetAnimationFrame( StrokesIndex ) ;
+		startNormalizedTime = aniCtr.CalculateNormalizedTime( StrokesFrame.StartFrame ) ;
+		endNormalizedTime = aniCtr.CalculateNormalizedTime( StrokesFrame.EndFrame ) ;
 		
-		float StartFrameSliderValue = TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) + timerBarWidth * StartNormalizedTime ;
-		StartFrameBarPoint.pixelInset = new Rect( StartFrameSliderValue , Screen.height - TimerBarPos.y ,10f , 20f ) ;		
-		float EndFrameSliderValue = TimerBarPos.x - ( TimerBarPoint.pixelInset.width * 0.5f ) + timerBarWidth * EndNormalizedTime ;
-		EndFrameBarPoint.pixelInset = new Rect( EndFrameSliderValue , Screen.height - TimerBarPos.y ,10f , 20f ) ;
+		float startFrameSliderValue = CalculateBarPointPos( timerBarPos.x , barPointLongSide , startNormalizedTime , 0f , 1f , timerBarWidth ) ;
+		startFrameBarPoint.pixelInset = new Rect( startFrameSliderValue , Screen.height - timerBarPos.y , barPointShortSide , barPointLongSide ) ;
+		float endFrameSliderValue = CalculateBarPointPos( timerBarPos.x , barPointLongSide , endNormalizedTime , 0f , 1f , timerBarWidth ) ;
+		endFrameBarPoint.pixelInset = new Rect( endFrameSliderValue , Screen.height - timerBarPos.y , barPointShortSide , barPointLongSide ) ;
 		
-		AniCtr.SetNormalizedTime( StartNormalizedTime ) ;
+		aniCtr.SetNormalizedTime( startNormalizedTime ) ;
 		if( !bPause )
-			AniCtr.SetPause( false ) ;
+			aniCtr.SetPause( false ) ;
 	}
 	
 	void SetAnimationDescription()
-	{
-		
+	{		
 		//Fake animation description
 		//set 0 , 120-1100
-		AniCtr.AddAnimation( "Set 0" , 120 , 770 ) ;
+		aniCtr.AddAnimation( "Set 0" , 120 , 770 ) ;
 		//set 1 , 120-264
-		AniCtr.AddAnimation( "Set 1" , 120 , 264 ) ;
+		aniCtr.AddAnimation( "Set 1" , 120 , 264 ) ;
 		//set 2 , 265-332
-		AniCtr.AddAnimation( "Set 2" , 265 , 332 ) ;
+		aniCtr.AddAnimation( "Set 2" , 265 , 332 ) ;
 		//set 3 , 333-449
-		AniCtr.AddAnimation( "Set 3" , 333 , 449 ) ;
+		aniCtr.AddAnimation( "Set 3" , 333 , 449 ) ;
 		//set 4 , 450-588
-		AniCtr.AddAnimation( "Set 4" , 450 , 588 ) ;
+		aniCtr.AddAnimation( "Set 4" , 450 , 588 ) ;
 		//set 5 , 589-770
-		AniCtr.AddAnimation( "Set 5" , 589 , 770 ) ;
-		
+		aniCtr.AddAnimation( "Set 5" , 589 , 770 ) ;		
+	}
+	
+	private float CalculateBarPointPos( float barStartPos , float pointLength , float pointValue , float startValue , float endValue , float barLength )
+	{
+		float pointStartPos = barStartPos - pointLength * 0.5f ;
+		float pointpercent = ( pointValue - startValue ) / ( endValue - startValue ) ;
+		float pointPos = pointStartPos + pointpercent * barLength ;
+		return pointPos ;
+	}
+	
+	private float CalculateBarPointValue( float oldValue , float gap , float barLength , float startValue , float endValue )
+	{
+		float percent = gap / barLength ;
+		float newValue = oldValue + ( percent * ( endValue - startValue ) ) ;
+		newValue = Mathf.Clamp( newValue , startValue , endValue ) ;
+		return newValue ;
 	}
 	
 	void Update()
@@ -308,9 +325,9 @@ public class MainController : MonoBehaviour {
 			return ;
 		
 		if( Input.GetMouseButtonDown( 0 ) )
-			MouseClick = true ;
+			mouseClick = true ;
 		if( Input.GetMouseButtonUp( 0 ) )
-			MouseRelease = true ;
+			mouseRelease = true ;
 		
 		if( Input.GetKeyDown( KeyCode.Alpha1 ) )
 			SetStrokes( 1 ) ;
@@ -334,10 +351,10 @@ public class MainController : MonoBehaviour {
 	void OnGUI()
 	{
  		//debug information
-		GUI.Label( new Rect( 5f , 5f , Screen.width , 20f ) , "Animation Bar : Bule" ) ;
+		GUI.Label( new Rect( 5f , 5f , Screen.width , 20f ) , "Animation Timeline Bar : Bule" ) ;
 		GUI.Label( new Rect( 5f , 25f , Screen.width , 20f ) , "Speed Bar : Red" ) ;
 		GUI.Label( new Rect( 5f , 45f , Screen.width , 20f ) , "Zoom Bar : Green" ) ;
-		GUI.Label( new Rect( 5f , 65f , Screen.width , 20f ) , "Start Frame Bar : Yellow Black" ) ;
+		GUI.Label( new Rect( 5f , 65f , Screen.width , 20f ) , "Start & End Frame Bar : Yellow Black" ) ;
 		//GUI.Label( new Rect( 5f , 65f , Screen.width , 20f ) , "bRotateCam : " + bRotateCam ) ;
     }
 }

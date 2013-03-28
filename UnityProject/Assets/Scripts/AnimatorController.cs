@@ -31,7 +31,7 @@ public class AnimatorController : MonoBehaviour {
 			return ;
 		}
 		//need set speed 1 to blend animation
-		animator.speed = AnimationSpeed ;
+		animator.speed = animationSpeed ;
 	}
 	
 	public bool StartPlay()
@@ -43,21 +43,21 @@ public class AnimatorController : MonoBehaviour {
 		return true ;
 	}
 	
-	public void AddAnimation( string AnimationName , int StartFrame , int EndFrame )
+	public void AddAnimation( string animationName , int startFrame , int endFrame )
 	{
-		AnimationFrame NewAni = new AnimationFrame() ;
-		NewAni.AnimationName = AnimationName ;
-		NewAni.StartFrame = StartFrame ;
-		NewAni.EndFrame = EndFrame ;
-		animations.Add( NewAni ) ;
+		AnimationFrame newAni = new AnimationFrame() ;
+		newAni.AnimationName = animationName ;
+		newAni.StartFrame = startFrame ;
+		newAni.EndFrame = endFrame ;
+		animations.Add( newAni ) ;
 	}
 	
-	private float AnimationTimer = 0f ;
-	private float AnimationSpeed = 1f ;
+	private float animationTimer = 0f ;
+	private float animationSpeed = 1f ;
 	IEnumerator AnimationController()
 	{
 		bPlay = true ;
-		animator.ForceStateNormalizedTime( AnimationTimer ) ;
+		animator.ForceStateNormalizedTime( animationTimer ) ;
 		float animationTotalTime = ( animations[0].EndFrame - animations[0].StartFrame ) / 30 ;
 		float frameNormalizedTime = 1 / animationTotalTime ;
 
@@ -65,8 +65,8 @@ public class AnimatorController : MonoBehaviour {
 		{
 			if( !bPause )
 			{
-				AnimationTimer += ( myFrameTime * frameNormalizedTime * AnimationSpeed ) ;				
-				animator.ForceStateNormalizedTime( AnimationTimer ) ;
+				animationTimer += ( myFrameTime * frameNormalizedTime * animationSpeed ) ;				
+				animator.ForceStateNormalizedTime( animationTimer ) ;
 			}
 			yield return new WaitForSeconds( myFrameTime ) ;
 		}
@@ -78,23 +78,23 @@ public class AnimatorController : MonoBehaviour {
 		SetPause( true ) ;
 	}
 
-	public void SetStart( float StartNormalizedTime )
+	public void SetStart( float startNormalizedTime )
 	{
 		bPlay = true ;
-		AnimationTimer = StartNormalizedTime ;
-		animator.ForceStateNormalizedTime( AnimationTimer ) ;
+		animationTimer = startNormalizedTime ;
+		animator.ForceStateNormalizedTime( animationTimer ) ;
 		SetPause( false ) ;
 	}
 
 	public bool GetPlayState(){return bPlay;}
 	public bool GetPauseState(){return bPause;}
-	public void SetPause( bool NewPause )
+	public void SetPause( bool newPause )
 	{
-		bPause = NewPause ;
+		bPause = newPause ;
 		//need set speed 1 to blend animation
 		if( !bPause )
 		{
-			animator.speed = AnimationSpeed ;
+			animator.speed = animationSpeed ;
 		}
 		else
 		{
@@ -102,24 +102,24 @@ public class AnimatorController : MonoBehaviour {
 		}
 	}
 	
-	public float GetNormalizedTime(){return AnimationTimer;}
-	public void SetNormalizedTime( float NewNormalizedTime )
+	public float GetNormalizedTime(){return animationTimer;}
+	public void SetNormalizedTime( float newNormalizedTime )
 	{
-		AnimationTimer = NewNormalizedTime ;
-		animator.ForceStateNormalizedTime( AnimationTimer ) ;
+		animationTimer = newNormalizedTime ;
+		animator.ForceStateNormalizedTime( animationTimer ) ;
 	}
 	
-	public float GetAnimationSpeed(){return AnimationSpeed;}
-	public void SetAnimationSpeed( float NewSpeed )
+	public float GetAnimationSpeed(){return animationSpeed;}
+	public void SetAnimationSpeed( float newSpeed )
 	{
-		AnimationSpeed = NewSpeed ;
+		animationSpeed = newSpeed ;
 		if( !bPause )
-			animator.speed = AnimationSpeed ;
+			animator.speed = animationSpeed ;
 	}
 	
-	public float CalculateNormalizedTime( float FrameIndex )
+	public float CalculateNormalizedTime( float frameIndex )
 	{
-		return ( ( FrameIndex - animations[0].StartFrame ) / ( animations[0].EndFrame - animations[0].StartFrame ) ) ;
+		return ( ( frameIndex - animations[0].StartFrame ) / ( animations[0].EndFrame - animations[0].StartFrame ) ) ;
 	}
 	
 	public AnimationFrame GetAnimationFrame( int index )
