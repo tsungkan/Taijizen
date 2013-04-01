@@ -13,6 +13,7 @@ public class AnimatorController : MonoBehaviour {
 	private bool bPlay = false ;
 	private bool bQuit = false ;
 	private bool bPause = false ;
+	private bool bMirror = false ;
 	float myFrameTime = 1f / 60f ;
 	
 	private Animator animator ;
@@ -34,7 +35,7 @@ public class AnimatorController : MonoBehaviour {
 		animator.speed = animationSpeed ;
 	}
 	
-	public bool StartPlay()
+	public bool StartPlay( )
 	{
 		if( animations.Count <= 0 )
 			return false ;
@@ -70,6 +71,12 @@ public class AnimatorController : MonoBehaviour {
 			}
 			yield return new WaitForSeconds( myFrameTime ) ;
 		}
+	}
+	
+	public void SetMirror()
+	{
+		bMirror = !bMirror ;
+		this.GetComponent<Animator>().SetBool( "bMirror", bMirror ) ;
 	}
 	
 	public void SetFinish()

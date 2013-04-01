@@ -3,31 +3,38 @@ using System.Collections;
 
 public class CameraController : MonoBehaviour {
 	
-	private float camFOV = 60f ;
+	private float camZoom = 2f ;
 	public Transform lookTarget = null ;
-	private float rotateSpeed = 1f ;
-	private float yPos = 1f ;
+	private float rotateSpeed = 5f ;
+	private float yPos = 0f ;
 	
 	public void MyRotate( float xGap , float yGap )
 	{
-		yPos = Mathf.Clamp( ( yGap / ( Screen.height * 5f ) ) + yPos , -1f , 3f ) ;
-		xGap = Mathf.Clamp( xGap , -rotateSpeed , rotateSpeed ) ;
+		xGap = Mathf.Clamp( ( xGap / ( Screen.width * 0.5f ) ) , -rotateSpeed , rotateSpeed ) ;
 		lookTarget.Rotate( Vector3.up * xGap ) ;
 		
+		yPos = Mathf.Clamp( ( yGap / ( Screen.height * 5f ) ) + yPos , -2f , 4f ) ;
+		SetCamera() ;
+	}
+	
+	void SetCamera()
+	{
 		Vector3 direction = lookTarget.forward * 2f ;
 		direction.y = yPos ;
+		Vector3 RayPositoin = lookTarget.transform.position ;
+		Vector3 RayDirection = direction ;
+		RayDirection.Normalize() ;
+		Ray ray = new Ray( RayPositoin , RayDirection ) ;
 		
-		this.transform.position = direction ;
+		this.transform.position = ray.GetPoint( camZoom ) ;
 		this.transform.LookAt( lookTarget ) ;
 	}
 	
 	public void SetCameraZoom( float newZoom )
 	{
-		camFOV = newZoom ;
-		this.camera.fieldOfView = camFOV ;
-		
+		camZoom = newZoom ;
+		SetCamera() ;
 	}
 	
-	public float GetCameraZoom(){return camFOV ;}
-	
+	public float GetCameraZoom(){return camZoom ;}
 }
